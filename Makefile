@@ -1,69 +1,41 @@
-########################################################################
-####################### Makefile Template ##############################
-########################################################################
-
-# Compiler settings - Can be customized.
+# Compiler and Flags
 CC = g++
-CXXFLAGS = -std=c++11 -Wall
-LDFLAGS = 
+CXXFLAGS = -std=c++17 -Wall -Wextra
+LDFLAGS_WIN = -lws2_32 -liphlpapi
+LDFLAGS_LINUX = -lpthread
 
-# Makefile settings - Can be customized.
+# Directories and Files
 APPNAME = myapp
-EXT = .cpp
 SRCDIR = src
 OBJDIR = obj
+SRC = $(wildcard $(SRCDIR)/*.cpp)
+OBJ = $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-############## Do not change anything from here downwards! #############
-SRC = $(wildcard $(SRCDIR)/*$(EXT))
-OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
-DEP = $(OBJ:$(OBJDIR)/%.o=%.d)
-# UNIX-based OS variables & settings
-RM = rm
-DELOBJ = $(OBJ)
-# Windows OS variables & settings
-DEL = del
-EXE = .exe
-WDELOBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)\\%.o)
+# Detect OS
+ifeq ($(OS),Windows_NT)
+    LDFLAGS = $(LDFLAGS_WIN)
+    MKDIR = mkdir $(OBJDIR)
+    RM = del /q /f
+else
+    LDFLAGS = $(LDFLAGS_LINUX)
+    MKDIR = mkdir -p $(OBJDIR)
+    RM = rm -rf
+endif
 
-########################################################################
-####################### Targets beginning here #########################
-########################################################################
+# Build Rules
+all: $(OBJDIR) $(APPNAME)
 
-all: $(APPNAME)
-
-# Builds the app
 $(APPNAME): $(OBJ)
+	@echo "Linking: $(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)"
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Creates the dependecy rules
-%.d: $(SRCDIR)/%$(EXT)
-	@$(CPP) $(CFLAGS) $< -MM -MT $(@:%.d=$(OBJDIR)/%.o) >$@
+$(OBJDIR):
+	@echo "Creating directory: $(OBJDIR)"
+	@if [ ! -d "$(OBJDIR)" ]; then $(MKDIR); fi
 
-# Includes all .h files
--include $(DEP)
-
-# Building rule for .o files and its .c/.cpp in combination with all .h
-$(OBJDIR)/%.o: $(SRCDIR)/%$(EXT)
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	@echo "Compiling: $(CC) $(CXXFLAGS) -o $@ -c $<"
 	$(CC) $(CXXFLAGS) -o $@ -c $<
 
-################### Cleaning rules for Unix-based OS ###################
-# Cleans complete project
-.PHONY: clean
 clean:
-	$(RM) $(DELOBJ) $(DEP) $(APPNAME)
-
-# Cleans only all files with the extension .d
-.PHONY: cleandep
-cleandep:
-	$(RM) $(DEP)
-
-#################### Cleaning rules for Windows OS #####################
-# Cleans complete project
-.PHONY: cleanw
-cleanw:
-	$(DEL) $(WDELOBJ) $(DEP) $(APPNAME)$(EXE)
-
-# Cleans only all files with the extension .d
-.PHONY: cleandepw
-cleandepw:
-	$(DEL) $(DEP)
+	rm -rf obj *.d *.exe
