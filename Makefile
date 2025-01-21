@@ -1,8 +1,8 @@
 # Compiler and Flags
 CC = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra
-LDFLAGS_WIN = -lws2_32 -liphlpapi
-LDFLAGS_LINUX = -lpthread
+LDFLAGS_WIN = -lws2_32 -liphlpapi -lpq
+LDFLAGS_LINUX = -lpthread -lpq
 
 # Directories and Files
 APPNAME = myapp
@@ -26,11 +26,11 @@ endif
 all: $(OBJDIR) $(APPNAME)
 
 $(APPNAME): $(OBJ)
-	@echo "Linking: $(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)"
+	@echo "[Linking]: $(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)"
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR):
-	@echo "Creating directory: $(OBJDIR)"
+	@echo "[Setup]: Creating directory: $(OBJDIR)"
 	@if [ ! -d "$(OBJDIR)" ]; then $(MKDIR); fi
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
