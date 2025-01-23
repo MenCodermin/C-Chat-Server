@@ -17,6 +17,7 @@
 #include <algorithm>
 
 #include "include/server.h"
+#include "include/db.h"
 
 #define PORT 8080
 #define MAX_CLIENTS 10

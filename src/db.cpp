@@ -44,3 +44,63 @@ std::string registerUser(PGconn* conn, const std::string& username, const std::s
     PQclear(res);
     return "Registration successful! User ID: " + userId;
 }
+
+std::string loginUser(PGconn* conn, const std::string username, const std::string password)
+{
+    std::string query = "SELECECT id FROM users WHERE username = $1 AND password = $2";
+    const char* paramValue[]  = { username.c_str(), password.c_str()};
+
+    PGresult* res = PQexecParams(conn, query.c_str(), 2, NULL, paramValue, NULL, NULL, 0);
+
+    if( PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0)
+    {
+        std::cerr << "Login failed: " << PQerrorMessage(conn) << std::endl;
+        PQclear(res);
+        return "Login failed. Invalid username or password.";
+    }
+
+    std::string userId = PQgetvalue(res, 0, 0);
+    PQclear(res);
+    return "Login successful! User ID: " + userId;
+}
+
+void saveMessage(PGconn* conn, int senderId, int receiverId, const std::string& message)
+{
+    std::string query = "INSERT INTO messages (sender_id, receiver_id, message) VALUES ($1,$2,$3)";
+
+    const char* paramValue[] = {std::to_string(senderId).c_str(), std::to_string(receiverId).c_str(), message.c_str()};
+
+    PGresult* res = PQexecParams(conn, query.c_str(), 3, NULL, paramValue, NULL, NULL, 0);
+
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        std::cerr << "Failed to save message: " << PQerrorMessage(conn) << std::endl;
+    } else {
+        std::cout << "Message saved successfully!" << std::endl;
+    }
+    
+    PQclear(res);
+}
+
+void getMessage(PGconn* conn, int userId)
+{
+    std::string query = "SELECT sender_id, timestamp, message FROM messages WHERE receiver_id = $1 BY timestamp;";
+    const char* paramValues[] = {std::to_string(userId).c_str()};
+
+    PGresult* res = PQexecParams(conn, query.c_str(), 1, NULL, paramValues, NULL, NULL, 0);
+
+    if(PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        std::cerr << "Failed to retireve message: " << PQerrorMessage(conn) << std::endl;
+        PQclear(res);
+        return;
+    }
+
+    int rows = PQntuples(res);
+    for ( int i = 0; i < rows; ++i)
+    {
+        std::cout << "From User " << PQgetvalue(res, i, 0) << " :" << PQgetvalue(res, i, 1)
+                  << " at " << PQgetvalue(res, i, 2) << std::endl;
+    }
+
+    PQclear(res);
+}
