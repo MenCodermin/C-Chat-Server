@@ -47,7 +47,7 @@ std::string registerUser(PGconn* conn, const std::string& username, const std::s
 
 std::string loginUser(PGconn* conn, const std::string& username, const std::string& password)
 {
-    std::string query = "SELECT id FROM users WHERE username = $1 AND password = $2";
+    std::string query = "SELECT id FROM users WHERE username = $1 AND password = $2;";
     const char* paramValue[]  = { username.c_str(), password.c_str()};
 
     PGresult* res = PQexecParams(conn, query.c_str(), 2, NULL, paramValue, NULL, NULL, 0);
@@ -66,9 +66,19 @@ std::string loginUser(PGconn* conn, const std::string& username, const std::stri
 
 void saveMessage(PGconn* conn, int senderId, int receiverId, const std::string& message)
 {
-    std::string query = "INSERT INTO messages (sender_id, receiver_id, message) VALUES ($1,$2,$3)";
+    if(!conn)
+    {
+        std::cerr << "Database connection is null. Cannot save message." << std::endl;
+        return;
+    }
 
-    const char* paramValue[] = {std::to_string(senderId).c_str(), std::to_string(receiverId).c_str(), message.c_str()};
+    std::string query = "INSERT INTO messages (sender_id, receiver_id, message,timestamp) VALUES ($1,$2,$3, CURRENT_TIMESTAMP);";
+
+    const char* paramValue[] = {
+        std::to_string(senderId).c_str(), 
+        std::to_string(receiverId).c_str(), 
+        message.c_str()
+    };
 
     PGresult* res = PQexecParams(conn, query.c_str(), 3, NULL, paramValue, NULL, NULL, 0);
 
