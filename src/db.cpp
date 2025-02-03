@@ -3,7 +3,7 @@
 
 PGconn* connectToDatabase()
 {
-    const char* conninfo = "host = localhost dbname = chat_db user = char_user password = chat_password";
+    const char* conninfo = "host = localhost dbname = chat_db user = postgres password = hdfw3784";
     PGconn* conn = PQconnectdb(conninfo);
 
     if(PQstatus(conn) != CONNECTION_OK)
@@ -45,9 +45,9 @@ std::string registerUser(PGconn* conn, const std::string& username, const std::s
     return "Registration successful! User ID: " + userId;
 }
 
-std::string loginUser(PGconn* conn, const std::string username, const std::string password)
+std::string loginUser(PGconn* conn, const std::string& username, const std::string& password)
 {
-    std::string query = "SELECECT id FROM users WHERE username = $1 AND password = $2";
+    std::string query = "SELECT id FROM users WHERE username = $1 AND password = $2";
     const char* paramValue[]  = { username.c_str(), password.c_str()};
 
     PGresult* res = PQexecParams(conn, query.c_str(), 2, NULL, paramValue, NULL, NULL, 0);
@@ -77,13 +77,13 @@ void saveMessage(PGconn* conn, int senderId, int receiverId, const std::string& 
     } else {
         std::cout << "Message saved successfully!" << std::endl;
     }
-    
+
     PQclear(res);
 }
 
 void getMessage(PGconn* conn, int userId)
 {
-    std::string query = "SELECT sender_id, timestamp, message FROM messages WHERE receiver_id = $1 BY timestamp;";
+    std::string query = "SELECT sender_id, timestamp, message FROM messages WHERE receiver_id = $1 ORDER BY timestamp;";
     const char* paramValues[] = {std::to_string(userId).c_str()};
 
     PGresult* res = PQexecParams(conn, query.c_str(), 1, NULL, paramValues, NULL, NULL, 0);
@@ -98,9 +98,20 @@ void getMessage(PGconn* conn, int userId)
     int rows = PQntuples(res);
     for ( int i = 0; i < rows; ++i)
     {
-        std::cout << "From User " << PQgetvalue(res, i, 0) << " :" << PQgetvalue(res, i, 1)
+        std::cout << "From User " << PQgetvalue(res, i, 0) 
+                  << " :" << PQgetvalue(res, i, 1)
                   << " at " << PQgetvalue(res, i, 2) << std::endl;
     }
 
     PQclear(res);
+}
+
+void closeDatabase(PGconn* conn)
+{
+    if (conn != nullptr) {
+        PQfinish(conn); // Properly close the connection
+        std::cout << "Database connection closed." << std::endl;
+    } else {
+        std::cerr << "Attempted to close a null database connection." << std::endl;
+    }
 }
