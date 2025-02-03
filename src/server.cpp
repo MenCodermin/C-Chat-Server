@@ -26,6 +26,8 @@
     typedef int socklen_t;
 #endif
 
+PGconn* dbConn;
+
 void Server::broadcastMessage(const std::string& message, int sender_fd)
 {
     std::lock_guard<std::mutex> lock(client_mutex);
@@ -58,12 +60,35 @@ void Server::handleClient(int client_socket)
             break;
         }
         std::string message(buffer);
+        std::cout << "Receieved: " << message << std::endl;
         broadcastMessage(message, client_socket);
+
+        size_t firstColon = message.find(":");
+        size_t secondColon = message.find(":", firstColon + 1);
+
+        if(firstColon != std::string::npos && secondColon != std::string::npos)
+        {
+            int senderId = std::stoi(message.substr(0,firstColon));
+            int receiverId = std::stoi(message.substr(firstColon + 1, secondColon - firstColon - 1));
+            std::string message = message.substr(secondColon + 1);
+        
+            saveMessage(dbConn, senderId, receiverId, message);
+        }
+
+        broadcastMessage(message,client_socket);
     }
 }
 
 void Server::startServer()
 {
+
+dbConn = connectToDatabase();
+    if(!dbConn)
+    {
+        std::cerr << "Failed to connect to the database." << std::endl;
+        return;
+    }
+
 #ifdef _WIN32
     WSADATA wsaData;
     if(WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
@@ -79,6 +104,8 @@ void Server::startServer()
         std::cerr << "Failed to initialize socket." << std::endl;
         return;
     }
+
+     std::cout << "Server is running on port " << PORT << std::endl;
 
     sockaddr_in server_addr{};   
     server_addr.sin_family = AF_INET;
@@ -97,7 +124,7 @@ void Server::startServer()
         return;
     }
 
-    std::cout << "Server is running on port " << PORT << std::endl;
+    std::cout << "Listening for connections..." << std::endl;
 
     while(true)
     {
