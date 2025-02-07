@@ -1,0 +1,50 @@
+# Operating system files
+/.DS_Store
+/Thumbs.db
+
+# Logs and temporary files
+/logs/
+/temp/
+*.log
+*.tmp
+*.bak
+
+# Build artifacts
+/build/
+/dist/
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# IDE-specific files
+/.idea/
+/.vscode/
+
+# Text editors
+/.DS_Store
+/Thumbs.db
+.DS_Store?
+Thumbs.db?
+*.sublime-project
+*.sublime-workspace
+
+# Programming languages
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Node.js
+/node_modules/
+npm-debug.log
+
+# Java
+*.class
+*.jar
+
+# C#
+*.suo
+*.user
+*.sln.DotSettings.user
